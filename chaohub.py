@@ -34,6 +34,7 @@ import tkinter as tk
 from tkinter import messagebox, filedialog
 from glitch_engine import GlitchManager
 from plant_system import CyberPlantManager
+from arcade_games import CyberBreak, NeonRunner
 
 # Initialize Pygame Mixer before doing anything else
 # Pygame mixer is used for background music and UI audio effects.
@@ -1975,7 +1976,9 @@ class GamesModule(tk.Frame):
         self.games = {
             "SNAKE PROTOCOL": SnakeGame,
             "PONG GLITCH": PongGame,
-            "DEFUSE FIREWORK": MinesweeperGame
+            "DEFUSE FIREWORK": MinesweeperGame,
+            "CYBER BREAK": CyberBreak,
+            "NEON RUNNER": NeonRunner
         }
 
         self.current_game_frame = None
