@@ -307,24 +307,28 @@ class CyberPlantManager:
                 return
 
             if self.alive:
-                # 1. Dehydration drain (-0.5% per second)
-                self.hydration = max(0.0, self.hydration - 0.5)
 
-                # 2. Death boundaries
+                # Death boundaries FIRST
                 if self.hydration <= 0.0:
                     self.alive = False
                     self.add_alert("[ CRITICAL ] Plant died of dehydration!")
                     self.save_state()
+
                 elif self.hydration >= 100.0:
                     self.alive = False
                     self.add_alert("[ CRITICAL ] Plant died of ROOT ROT!")
                     self.save_state()
+
                 else:
-                    # 3. Development rules (+0.2% per second if H2O is safely 25.0%-75.0%)
+                    # THEN drain hydration
+                    self.hydration = max(0.0, self.hydration - 0.5)
+
+                    # Growth rules
                     if 25.0 <= self.hydration <= 75.0:
                         prev_stage = self.get_stage()
                         self.growth_points = min(100.0, self.growth_points + 0.2)
                         curr_stage = self.get_stage()
+
                         if prev_stage != curr_stage:
                             self.add_alert(f"[ EVOLUTION ] Evolved into {curr_stage}!")
 
