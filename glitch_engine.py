@@ -35,9 +35,6 @@ class GlitchSafety:
             # If there's an exception or we exceeded the time limit, abort
             if exc_type is not None:
                 print(f"[GlitchSafety] Exception intercepted in {self.label}: {exc_val}")
-            else:
-                print(f"[GlitchSafety] Render limit exceeded in {self.label}: {elapsed:.2f}ms (Limit: {self.limit_ms}ms). Aborting.")
-            
             if self.on_abort:
                 try:
                     self.on_abort()
@@ -470,7 +467,7 @@ class GlitchManager:
         self.render_glitch_frames(widget, base_image, start_time, duration, magnitude)
 
     def render_glitch_frames(self, widget, base_image, start_time, duration, magnitude):
-        """Recursively draws glitched frames onto the overlay canvas at fast intervals."""
+        """Recursively draws glitched frames using cached image data to prevent frame drops."""
         if widget not in self.active_glitches:
             return
             
@@ -480,15 +477,12 @@ class GlitchManager:
             return
             
         canvas = self.active_glitches[widget]
-        w, h = base_image.size
         
-        # Setup Safety Fallback. If processing exceeds 16ms, we abort and tear down the overlay.
-        with GlitchSafety("WidgetGlitchFrame", limit_ms=16.0, on_abort=lambda: self.stop_widget_glitch(widget)):
-            # Work on a copy of the base image coordinates
-            frame_img = base_image.copy()
-            arr = np.array(frame_img)
+        # Safe processing threshold
+        with GlitchSafety("WidgetGlitchFrame", limit_ms=25.0, on_abort=lambda: self.stop_widget_glitch(widget)):
+            # Convert cached base image to array instead of running an active screen grab
+            arr = np.array(base_image)
             
-            # Select random effects from the matrix pool
             effects = [
                 GlitchEffects.screen_tear,
                 GlitchEffects.pixel_sort,
@@ -498,27 +492,25 @@ class GlitchManager:
                 GlitchEffects.scanline_glitch
             ]
             
-            # Apply 1 to 3 random effects
-            chosen = random.sample(effects, k=random.randint(1, 3))
+            # Keep effect calculations modest to leave CPU headroom for ChaoHub logic
+            chosen = random.sample(effects, k=random.randint(1, 2))
             for effect in chosen:
                 arr = effect(arr, magnitude=magnitude)
                 
             frame_img = Image.fromarray(arr)
             
-            # Draw hex overlay strings occasionally
-            if random.random() < 0.4:
+            if random.random() < 0.3:
                 frame_img = GlitchEffects.draw_hex_overlay(frame_img, magnitude)
                 
-            # Convert to PhotoImage and render to canvas
             photo = ImageTk.PhotoImage(frame_img)
-            canvas.delete("all")
-            canvas.create_image(0, 0, image=photo, anchor="nw")
             
-            # Maintain strong reference to prevent garbage collection
-            canvas.photo_ref = photo
+            if canvas.winfo_exists():
+                canvas.delete("all")
+                canvas.create_image(0, 0, image=photo, anchor="nw")
+                canvas.photo_ref = photo
             
-        # Queue next frame in 30ms (~33 FPS)
-        widget.after(30, lambda: self.render_glitch_frames(widget, base_image, start_time, duration, magnitude))
+        # Queue frame update comfortably at 45ms loops (~22 updates a sec is great for glitches)
+        widget.after(45, lambda: self.render_glitch_frames(widget, base_image, start_time, duration, magnitude))
 
     def stop_widget_glitch(self, widget):
         """Removes the overlay canvas and restores the original widget visibility."""
