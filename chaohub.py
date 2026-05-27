@@ -33,6 +33,7 @@ import pyttsx3
 import tkinter as tk
 from tkinter import messagebox, filedialog
 from glitch_engine import GlitchManager
+from plant_system import CyberPlantManager
 
 # Initialize Pygame Mixer before doing anything else
 # Pygame mixer is used for background music and UI audio effects.
@@ -2515,6 +2516,9 @@ class ChaoHubApp:
         self.glitch_manager = GlitchManager(self.root)
         self.glitch_manager.set_mouse_trail(True)
 
+        # Initialize Plant Module
+        self.cyber_plant = None
+
         # Backdoor Exit Hotkey: Ctrl+Shift+Q
         # Binds globally inside application to prevent trap lockouts
         self.root.bind("<Control-Shift-KeyPress-Q>", self.shutdown)
@@ -2632,6 +2636,14 @@ class ChaoHubApp:
             self.nav_buttons[name] = btn
             # Register nav button triggers
             self.glitch_manager.register_widget(btn, hover=True, click=True, temporal=False, magnitude=0.18)
+
+        self.plant_frame = tk.Frame(self.sidebar, bg=BG_PANEL)
+        self.plant_frame.pack(side="bottom", fill="x", padx=10, pady=(10, 0))
+
+        self.cyber_plant = CyberPlantManager(
+            parent_frame=self.plant_frame,
+            glitch_manager=self.glitch_manager
+        )
 
         # Backdoor exit indicator (flashing broken pixel warning)
         self.exit_label = tk.Label(self.sidebar, text="[ BACKDOOR: Ctrl+Shift+Q ]", fg="#333333", bg=BG_PANEL, font=("Courier", 8))
