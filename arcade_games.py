@@ -333,9 +333,9 @@ class CyberBreak(PygameGameFrame):
         self.particles = retained_particles
             
         # Paddle movement
-        if self.keys.get("Left"):
+        if self.keys.get("Left") or self.keys.get("a") or self.keys.get("A"):
             self.paddle_x -= self.paddle_speed * dt
-        if self.keys.get("Right"):
+        if self.keys.get("Right") or self.keys.get("d") or self.keys.get("D"):
             self.paddle_x += self.paddle_speed * dt
             
         # Constrain paddle
@@ -653,7 +653,7 @@ class CyberBreak(PygameGameFrame):
         if self.laser_timer > 0:
             # Gun mounts
             pygame.draw.rect(surface, (255, 0, 255), (px - 2, py - 4, 4, 6))
-            pygame.draw.rect(surface, (px + self.paddle_width - 2, py - 4, 4, 6))
+            pygame.draw.rect(surface, (255, 0, 255), (px + self.paddle_width - 2, py - 4, 4, 6))
             
         # Draw balls
         for ball in self.balls:
